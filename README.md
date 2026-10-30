@@ -56,3 +56,54 @@ Every row above came from an actual call to the endpoint, not from guessing.
 ```bash
 uv run test_main.py
 ```
+
+## Expose it with a tunnel
+
+Two ways. **Quick tunnel** (dynamic) needs no account; **named tunnel** (static)
+gives you a fixed hostname that survives restarts.
+
+The server must listen on `127.0.0.1:8000` and stay running — both commands
+below assume that.
+
+### Dynamic (quick tunnel)
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:8000
+```
+
+It prints a `https://<random-words>.trycloudflare.com` URL. That URL is
+temporary: it disappears the moment the process stops and changes on every
+start. Good for a demo, useless for a judge who needs a stable link.
+
+### Static (named tunnel)
+
+Needs a domain whose nameservers point at Cloudflare.
+
+```bash
+cloudflared tunnel login                      # pick the zone, once
+cloudflared tunnel create phishing-checker    # stores credentials in ~/.cloudflared
+cloudflared tunnel route dns phishing-checker phishing.your-domain.com
+cloudflared tunnel run phishing-checker --url http://127.0.0.1:8000
+```
+
+The last command is the whole config for a single hostname — no YAML needed.
+For several hostnames, write `~/.cloudflared/config.yml` instead:
+
+```yaml
+tunnel: phishing-checker
+credentials-file: /Users/you/.cloudflared/<tunnel-id>.json
+ingress:
+  - hostname: phishing.your-domain.com
+    service: http://127.0.0.1:8000
+  - service: http_status:404
+```
+
+then run `cloudflared tunnel run phishing-checker`. To make it survive logout,
+`sudo cloudflared service install`.
+
+Check it works from the outside:
+
+```bash
+curl 'https://phishing.your-domain.com/api/check?url=https://tokopedia.com/'
+```
+
