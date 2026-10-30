@@ -11,7 +11,7 @@ curl 'http://localhost:8000/api/check?url=https://www.paypal.com/signin'
 ```
 
 ```json
-{"url": "https://www.paypal.com/signin", "verdict": "safe", "score": 0.0, "reasons": []}
+{"url": "https://www.paypal.com/signin", "result": "good"}
 ```
 
 ## How it works

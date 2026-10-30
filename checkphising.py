@@ -33,8 +33,8 @@ def score(url: str) -> dict:
         reasons.append("high-abuse tld")
 
     n = len(reasons)
-    verdict = "phishing" if n >= 3 else "suspicious" if n >= 1 else "safe"
-    return {"url": url, "verdict": verdict, "score": round(min(n / 4, 1.0), 2), "reasons": reasons}
+    result = "phishing" if n >= 3 else "suspicious" if n >= 1 else "good"
+    return {"url": url, "result": result}
 
 
 if __name__ == "__main__":
