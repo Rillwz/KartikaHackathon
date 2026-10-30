@@ -28,6 +28,58 @@ The response is always `{"url": ..., "result": ...}`, where `result` is either
 host does not resolve, or the URL points at a non-public address (loopback,
 private IPs, link-local/metadata such as `169.254.169.254`).
 
+## Sequence diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant A as FastAPI (main.py)
+    participant D as DNS resolver
+    participant P as checkphising.py
+    participant L as Log
+
+    C->>A: GET /api/check?url=<url>
+    A->>A: parse URL, check scheme is http/https
+
+    alt scheme invalid or hostname missing
+        A-->>C: 400 "url must be http(s)"
+    else scheme ok
+        A->>D: resolve hostname
+        alt host does not resolve
+            D-->>A: no address
+            A-->>C: 400 "host does not resolve"
+        else address found
+            D-->>A: IP addresses
+            A->>A: every IP must be public
+            alt any IP is loopback / private / link-local
+                A-->>C: 400 "non-public address"
+            else all public
+                A->>A: wait for a free slot (semaphore 4)
+                A->>P: spawn subprocess, argv -- <url>
+                Note over A,P: 30s timeout
+
+                alt timeout
+                    A->>P: kill
+                    A-->>C: 504 "check timed out"
+                else finished
+                    P-->>A: stdout JSON + stderr + exit code
+                    alt exit code != 0
+                        A->>L: log exit code and stderr
+                        A-->>C: 500 "check failed"
+                    else exit 0
+                        alt stdout is not JSON
+                            A-->>C: 502 "checker returned no JSON"
+                        else valid JSON
+                            A-->>C: 200 {"url", "result": "good" | "bad"}
+                        end
+                    end
+                end
+            end
+        end
+    end
+```
+
 ## Example results
 
 Official URLs of large companies, plus their look-alikes:
