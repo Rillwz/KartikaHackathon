@@ -5,10 +5,12 @@ FastAPI endpoint that scores a URL for phishing indicators.
 ## Run
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install fastapi uvicorn
-.venv/bin/uvicorn main:app --reload
-curl 'http://localhost:8000/api/check?url=https://www.paypal.com/signin'
+uv run main.py
 ```
+
+`uv` reads the inline dependencies in `main.py` and starts the server on
+:8000. No venv, no install step. `pip install -r requirements.txt` +
+`uvicorn main:app --reload` still works if you prefer it.
 
 ```json
 {"url": "https://www.paypal.com/signin", "result": "good"}

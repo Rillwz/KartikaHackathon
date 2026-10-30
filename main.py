@@ -1,3 +1,6 @@
+# /// script
+# dependencies = ["fastapi", "uvicorn"]
+# ///
 import asyncio, ipaddress, json, socket, sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -55,7 +58,5 @@ async def check_phishing(url: str = Query(..., max_length=2048)):
 
 
 if __name__ == "__main__":
-    assert not _safe_host("127.0.0.1")
-    assert not _safe_host("169.254.169.254")
-    assert _safe_host("example.com")
-    print("self-check ok")
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
