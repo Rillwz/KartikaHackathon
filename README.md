@@ -51,25 +51,6 @@ say so — it is one line in `main.py`.
 
 Every row above came from an actual call to the endpoint, not from guessing.
 
-## How it works
-
-`main.py` validates the URL (http/https, host must resolve to a public IP) then
-runs `checkphising.py` as a subprocess — at most 4 concurrent checks, 30 seconds
-each. `checkphising.py` is a heuristic mockup: no network calls, no model.
-Swap its `score()` for a real classifier and the API stays the same.
-
-Rules used by `score()`:
-
-- brand appears in the host but not on its official domain (`tokopediaa.com`)
-- URL shortener (`bit.ly`)
-- raw IP instead of a domain name
-- excessive subdomains, many hyphens, overly long URL
-- userinfo trick (`https://paypal.com@evil.tk`)
-- not https
-- high-abuse TLD (`.tk`, `.top`, `.xyz`, `.click`, `.zip`, `.mov`, `.rest`)
-
-A single hit is enough to mark a URL `bad`.
-
 ## Test
 
 ```bash
