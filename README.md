@@ -8,12 +8,12 @@ FastAPI endpoint that scores a URL for phishing indicators.
 uv run main.py
 ```
 
-`uv` membaca dependency inline di `main.py` dan menyalakan server di
-`http://127.0.0.1:8000`. Tanpa venv, tanpa langkah install.
-`pip install -r requirements.txt` + `uvicorn main:app --reload` masih bisa
-kalau lebih suka cara itu.
+`uv` reads the inline dependencies in `main.py` and starts the server on
+`http://127.0.0.1:8000`. No venv, no install step.
+`pip install -r requirements.txt` + `uvicorn main:app --reload` still works if
+you prefer that route.
 
-## Cara memanggil
+## Calling the API
 
 ```bash
 curl 'http://127.0.0.1:8000/api/check?url=https://tokopedia.com/'
@@ -23,14 +23,14 @@ curl 'http://127.0.0.1:8000/api/check?url=https://tokopedia.com/'
 {"url": "https://tokopedia.com/", "result": "good"}
 ```
 
-Respons selalu `{"url": ..., "result": ...}` dengan `result` bernilai `good`
-atau `bad`. Endpoint menolak dengan 400 kalau skema bukan http/https, host
-tidak bisa di-resolve, atau URL mengarah ke alamat non-publik (loopback,
-IP privat, link-local/metadata seperti `169.254.169.254`).
+The response is always `{"url": ..., "result": ...}`, where `result` is either
+`good` or `bad`. The endpoint returns 400 if the scheme is not http/https, the
+host does not resolve, or the URL points at a non-public address (loopback,
+private IPs, link-local/metadata such as `169.254.169.254`).
 
-## Contoh hasil
+## Example results
 
-Situs perusahaan besar (URL resmi), dan tiruannya:
+Official URLs of large companies, plus their look-alikes:
 
 | URL | result |
 |---|---|
@@ -44,35 +44,40 @@ Situs perusahaan besar (URL resmi), dan tiruannya:
 | `https://www.blibli.com/` | good |
 | `https://www.bankmandiri.co.id/` | good |
 | `https://bca.co.id/` | good |
-| `https://tokopediaa.com/` | bad — brand di luar domain asli |
-| `http://paypal.com@evil.tk/login` | bad — trik userinfo |
+| `https://tokopediaa.com/` | bad — brand outside its real domain |
+| `http://paypal.com@evil.tk/login` | bad — userinfo trick |
 | `https://bit.ly/abc123` | bad — URL shortener |
-| `http://tokopedia.com/` | bad — bukan https |
-| `http://192.168.1.1/admin` | 400 — IP non-publik (ditolak sebelum dinilai) |
-| `https://microsoft-login.verify.tk/x` | 400 — domain tidak resolve |
+| `http://tokopedia.com/` | bad — not https |
+| `http://192.168.1.1/admin` | 400 — non-public IP, rejected before scoring |
+| `https://microsoft-login.verify.tk/x` | 400 — domain does not resolve |
 
-`192.168.1.1` dan domain yang tidak ada ditolak di validasi URL, jadi tidak
-pernah sampai ke scorer. Kalau butuh keduanya dijawab `bad` (bukan 400),
-bilang saja — satu baris di `main.py`.
+`192.168.1.1` and non-existent domains are rejected during URL validation, so
+they never reach the scorer. If you want both answered as `bad` instead of 400,
+say so — it is one line in `main.py`.
 
-Data di atas diambil dari pemanggilan sungguhan ke endpoint, bukan karangan.
+Every row above came from an actual call to the endpoint, not from guessing.
 
-## Cara kerja
+## How it works
 
-`main.py` memvalidasi URL (http/https, dan host harus resolve ke IP publik)
-lalu menjalankan `checkphising.py` sebagai subprocess — maksimal 4 pengecekan
-paralel, 30 detik per pengecekan. `checkphising.py` adalah mockup heuristik:
-tanpa panggilan jaringan, tanpa model. Tukar fungsi `score()` dengan
-classifier sungguhan dan API-nya tidak perlu berubah.
+`main.py` validates the URL (http/https, host must resolve to a public IP) then
+runs `checkphising.py` as a subprocess — at most 4 concurrent checks, 30 seconds
+each. `checkphising.py` is a heuristic mockup: no network calls, no model.
+Swap its `score()` for a real classifier and the API stays the same.
 
-Aturan yang dipakai `score()`:
+Rules used by `score()`:
 
-- brand muncul di host tapi bukan domain resminya (`tokopediaa.com`)
+- brand appears in the host but not on its official domain (`tokopediaa.com`)
 - URL shortener (`bit.ly`)
-- IP mentah, bukan domain
-- subdomain berlebihan, banyak tanda hubung, URL terlalu panjang
-- trik userinfo (`https://paypal.com@evil.tk`)
-- bukan https
-- TLD rawan abuse (`.tk`, `.top`, `.xyz`, `.click`, `.zip`, `.mov`, `.rest`)
+- raw IP instead of a domain name
+- excessive subdomains, many hyphens, overly long URL
+- userinfo trick (`https://paypal.com@evil.tk`)
+- not https
+- high-abuse TLD (`.tk`, `.top`, `.xyz`, `.click`, `.zip`, `.mov`, `.rest`)
 
-Satu alasan saja sudah cukup untuk `bad`.
+A single hit is enough to mark a URL `bad`.
+
+## Test
+
+```bash
+uv run test_main.py
+```
