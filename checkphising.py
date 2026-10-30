@@ -32,8 +32,7 @@ def score(url: str) -> dict:
     if re.search(r"\.(zip|mov|tk|top|xyz|click|rest)$", host):
         reasons.append("high-abuse tld")
 
-    n = len(reasons)
-    result = "phishing" if n >= 3 else "suspicious" if n >= 1 else "good"
+    result = "bad" if reasons else "good"
     return {"url": url, "result": result}
 
 
