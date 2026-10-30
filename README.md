@@ -39,7 +39,6 @@ Official URLs of large companies, plus their look-alikes:
 | `https://www.apple.com/` | good |
 | `https://www.netflix.com/` | good |
 | `https://www.paypal.com/` | good |
-| `https://tokopediaa.com/` | bad — brand outside its real domain |
 | `http://paypal.com@evil.tk/login` | bad — userinfo trick |
 | `https://bit.ly/abc123` | bad — URL shortener |
 | `http://tokopedia.com/` | bad — not https |
