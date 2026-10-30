@@ -30,6 +30,20 @@ private IPs, link-local/metadata such as `169.254.169.254`).
 
 ## Sequence diagram
 
+### Simple
+
+```mermaid
+sequenceDiagram
+    Client->>API: GET /api/check?url=<url>
+    API->>API: validate URL (http/https, public host)
+    API->>Checker: run checkphising.py <url>
+    Checker-->>API: {"url", "result"}
+    API-->>Client: 200 {"url", "result": "good" | "bad"}
+    Note over API,Client: invalid or non-public URL → 400
+```
+
+### Detailed
+
 ```mermaid
 sequenceDiagram
     autonumber
